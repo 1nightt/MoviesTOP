@@ -1,4 +1,5 @@
 import UIKit
+import CoreData
 
 class FavoriteViewController: UIViewController {
     
@@ -17,6 +18,7 @@ class FavoriteViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        loadFavorites()
         updateUI()
     }
     
@@ -112,6 +114,15 @@ class FavoriteViewController: UIViewController {
         ])
     }
     
+    // MARK: - Data Loading
+    private func loadFavorites() {
+        // Загружаем данные из CoreData
+        let favoriteMovies = CoreDataManager.shared.getAllFavorites()
+        
+        // Конвертируем FavoriteMovie в MoviesDescription
+        favorites = favoriteMovies.map { CoreDataManager.shared.convertToMoviesDescription(favoriteMovie: $0) }
+    }
+    
     // MARK: - UI Updates
     private func updateUI() {
         if favorites.isEmpty {
@@ -122,25 +133,6 @@ class FavoriteViewController: UIViewController {
             emptyStateView.isHidden = true
             tableView.reloadData()
         }
-    }
-    
-    // MARK: - Actions
-    @objc private func addDummyFavorite() {
-        // Временная функция для демонстрации UI избранного
-        // В реальном приложении здесь будет логика добавления из основного экрана
-        
-        let dummyMovie = MoviesDescription(
-            kinopoiskID: 123,
-            nameRU: "Пример фильма",
-            posterURL: URL(string: "https://example.com/poster.jpg")!,
-            ratingKinopoisk: 8.5,
-            year: 2023,
-            description: "Описание фильма будет здесь",
-            genres: [Genre(genre: "Драма"), Genre(genre: "Триллер")]
-        )
-        
-        favorites.append(dummyMovie)
-        updateUI()
     }
 }
 
@@ -179,6 +171,11 @@ extension FavoriteViewController: UITableViewDelegate {
         let deleteAction = UIContextualAction(style: .destructive, title: "Удалить") { [weak self] (_, _, completion) in
             guard let self = self else { return }
             
+            let movie = self.favorites[indexPath.row]
+            // Удаляем из CoreData
+            CoreDataManager.shared.removeFromFavorites(id: movie.kinopoiskID)
+            
+            // Обновляем локальный массив и UI
             self.favorites.remove(at: indexPath.row)
             tableView.deleteRows(at: [indexPath], with: .automatic)
             

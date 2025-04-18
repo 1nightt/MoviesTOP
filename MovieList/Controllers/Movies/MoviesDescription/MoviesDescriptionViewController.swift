@@ -1,4 +1,5 @@
 import UIKit
+import CoreData
 
 class MoviesDescriptionViewController: UIViewController {
     
@@ -8,8 +9,10 @@ class MoviesDescriptionViewController: UIViewController {
     
     // MARK: - Private Properties
     private let networkManager = NetworkManager.shared
+    private let coreDataManager = CoreDataManager.shared
     private let scrollView = UIScrollView()
     private let contentView = UIView()
+    private var isFavorite = false
     
     // UI Elements
     private let posterContainerView = UIView()
@@ -39,6 +42,7 @@ class MoviesDescriptionViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(true, animated: false)
+        checkFavoriteStatus()
     }
     
     override func viewDidLayoutSubviews() {
@@ -449,6 +453,9 @@ class MoviesDescriptionViewController: UIViewController {
         // Описание
         descriptionLabel.text = movieDescription.description
         
+        // Проверяем статус избранного
+        checkFavoriteStatus()
+        
         // Анимация появления информации
         [titleNameLabel, infoStackView, descriptionTitleLabel, descriptionLabel].forEach { view in
             view.alpha = 0
@@ -458,13 +465,34 @@ class MoviesDescriptionViewController: UIViewController {
         }
     }
     
+    private func checkFavoriteStatus() {
+        guard let movieDescription = movieDescription else { return }
+        
+        // Проверяем, находится ли фильм в избранном
+        isFavorite = coreDataManager.isMovieInFavorites(id: movieDescription.kinopoiskID)
+        
+        // Обновляем внешний вид кнопки
+        updateFavoriteButtonAppearance()
+    }
+    
+    private func updateFavoriteButtonAppearance() {
+        if isFavorite {
+            favoriteButton.setImage(UIImage(systemName: "heart.fill"), for: .normal)
+            favoriteButton.setTitle("  В избранном", for: .normal)
+        } else {
+            favoriteButton.setImage(UIImage(systemName: "heart"), for: .normal)
+            favoriteButton.setTitle("  В избранное", for: .normal)
+        }
+    }
+    
     // MARK: - Actions
     @objc private func backButtonPressed() {
         navigationController?.popViewController(animated: true)
     }
     
     @objc private func favoriteButtonTapped() {
-        // Здесь будет логика добавления в избранное
+        guard let movieDescription = movieDescription else { return }
+        
         // Анимация кнопки
         UIView.animate(withDuration: 0.1, animations: {
             self.favoriteButton.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
@@ -478,14 +506,19 @@ class MoviesDescriptionViewController: UIViewController {
         let generator = UIImpactFeedbackGenerator(style: .medium)
         generator.impactOccurred()
         
-        // Замена иконки и текста для имитации добавления в избранное
-        if favoriteButton.imageView?.image == UIImage(systemName: "heart") {
-            favoriteButton.setImage(UIImage(systemName: "heart.fill"), for: .normal)
-            favoriteButton.setTitle("  В избранном", for: .normal)
+        // Логика добавления/удаления из избранного
+        if isFavorite {
+            // Удаляем из избранного
+            coreDataManager.removeFromFavorites(id: movieDescription.kinopoiskID)
+            isFavorite = false
         } else {
-            favoriteButton.setImage(UIImage(systemName: "heart"), for: .normal)
-            favoriteButton.setTitle("  В избранное", for: .normal)
+            // Добавляем в избранное
+            coreDataManager.addToFavorites(movie: movieDescription)
+            isFavorite = true
         }
+        
+        // Обновляем вид кнопки
+        updateFavoriteButtonAppearance()
     }
     
     @objc private func shareButtonTapped() {
