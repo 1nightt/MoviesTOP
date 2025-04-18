@@ -36,7 +36,7 @@ enum Resources {
         enum Images {
             static let movies = UIImage(systemName: "film")
             static let favorite = UIImage(systemName: "heart.fill")
-            static let placeholder = UIImage(systemName: "photo")
+            static let placeholder = UIImage(systemName: "photo")?.withTintColor(.darkGray, renderingMode: .alwaysOriginal)
             static let search = UIImage(systemName: "magnifyingglass")
             static let star = UIImage(systemName: "star.fill")
         }

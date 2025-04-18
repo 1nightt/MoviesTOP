@@ -314,12 +314,10 @@ class FavoriteMovieCell: UITableViewCell {
         let genres = movie.genres.prefix(2).map { $0.genre }.joined(separator: ", ")
         genreLabel.text = genres
         
-        // Загрузка изображения (в реальном приложении использовать NetworkManager)
-        posterImageView.image = Resources.Strings.Images.placeholder
-        
-        NetworkManager.shared.fetchPoster(from: movie.posterURL) { [weak self] data in
+        // Загрузка изображения из кэша или сети с использованием обновленного метода
+        NetworkManager.shared.fetchPoster(from: movie.posterURL) { [weak self] image in
             DispatchQueue.main.async {
-                self?.posterImageView.image = UIImage(data: data)
+                self?.posterImageView.image = image
             }
         }
     }

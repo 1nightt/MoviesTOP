@@ -321,18 +321,16 @@ extension MoviesViewController: UICollectionViewDataSource {
         cell.fadeIn()
         
         // Загружаем постер
-        networkManager.fetchPoster(from: film.posterURLPreview) { data in
-            if let image = UIImage(data: data) {
-                DispatchQueue.main.async {
-                    // Проверяем, что ячейка все еще отображает тот же фильм
-                    if let visibleCell = collectionView.cellForItem(at: indexPath) as? MoviesCell,
-                       visibleCell.label.text == film.nameRU {
-                        UIView.transition(with: visibleCell.imageView,
-                                          duration: 0.3,
-                                          options: .transitionCrossDissolve,
-                                          animations: { visibleCell.imageView.image = image },
-                                          completion: nil)
-                    }
+        networkManager.fetchPoster(from: film.posterURLPreview) { image in
+            DispatchQueue.main.async {
+                // Проверяем, что ячейка все еще отображает тот же фильм
+                if let visibleCell = collectionView.cellForItem(at: indexPath) as? MoviesCell,
+                   visibleCell.label.text == film.nameRU {
+                    UIView.transition(with: visibleCell.imageView,
+                                      duration: 0.3,
+                                      options: .transitionCrossDissolve,
+                                      animations: { visibleCell.imageView.image = image },
+                                      completion: nil)
                 }
             }
         }

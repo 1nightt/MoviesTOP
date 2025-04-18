@@ -418,8 +418,8 @@ class MoviesDescriptionViewController: UIViewController {
         guard let movieDescription = movieDescription else { return }
         
         // Загрузка постера с анимацией
-        networkManager.fetchPoster(from: movieDescription.posterURL) { [weak self] data in
-            guard let self = self, let image = UIImage(data: data) else { return }
+        networkManager.fetchPoster(from: movieDescription.posterURL) { [weak self] image in
+            guard let self = self else { return }
             
             DispatchQueue.main.async {
                 UIView.transition(with: self.posterImageView,

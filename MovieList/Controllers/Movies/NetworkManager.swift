@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 
 enum NetworkError: Error {
     case invalidURL, decodingError, noData
@@ -6,6 +7,7 @@ enum NetworkError: Error {
 
 class NetworkManager {
     static let shared = NetworkManager()
+    private let imageCache = ImageCacheManager.shared
     
     private var apiKey: String? {
         return KeychainManager.shared.retrieve(key: "apiKey")
@@ -22,12 +24,33 @@ class NetworkManager {
         }
     }
 
-    func fetchPoster(from url: URL, completion: @escaping (Data) -> Void) {
+    func fetchPoster(from url: URL, completion: @escaping (UIImage) -> Void) {
+        // Проверяем, есть ли уже изображение в кэше
+        if let cachedImage = imageCache.loadImageFromCache(forURL: url) {
+            DispatchQueue.main.async {
+                completion(cachedImage)
+            }
+            return
+        }
+        
+        // Если изображения нет в кэше, загружаем из сети
         DispatchQueue.global().async {
-            guard let imageData = try? Data(contentsOf: url) else { return }
+            guard let imageData = try? Data(contentsOf: url),
+                  let image = UIImage(data: imageData) else { 
+                // В случае ошибки возвращаем placeholder
+                DispatchQueue.main.async {
+                    if let placeholder = Resources.Strings.Images.placeholder {
+                        completion(placeholder)
+                    }
+                }
+                return 
+            }
+            
+            // Сохраняем изображение в кэш
+            self.imageCache.saveImageToCache(image: image, forURL: url)
             
             DispatchQueue.main.async {
-                completion(imageData)
+                completion(image)
             }
         }
     }
